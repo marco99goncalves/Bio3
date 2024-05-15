@@ -24,7 +24,6 @@ def ReadFasta(file):
 def GenerateKMers(kMerLength=2): #ahah two-mers cause cancer
     aminoAcids = ['A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 
                    'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V']
-    # print([''.join(p) for p in product(aminoAcids, repeat=kMerLength)])
     return [''.join(p) for p in product(aminoAcids, repeat=kMerLength)]
 
 # Function to calculate FFP for a given sequence
@@ -32,7 +31,7 @@ def CalculateFFP(sequence, kMers, kMerLength=2):
     ffp = dict.fromkeys(kMers, 0)
     for i in range(len(sequence) - 1):
         dinucleotide = sequence[i:i+kMerLength]
-        if dinucleotide in ffp: # TODO: Confirmar porque raios e que isto e preciso, porque isto crasha porque existe um X??
+        if dinucleotide in ffp:
             ffp[dinucleotide] += 1
             
     total = sum(ffp.values())
@@ -100,7 +99,6 @@ def main():
             results[model_name][scoring] = {'mean': mean, 'std': std}
         print()
 
-    # Print results
     for model_name, model in results.items():
         model_name_length = len(model_name)
         target = floor((50 - model_name_length - 2)/2)
