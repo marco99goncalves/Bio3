@@ -6,6 +6,11 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
 import argparse
+from math import floor
+from colorama import Fore, Back, Style, init
+
+# Initialize colorama
+init()
 
 # Function to read sequences from fasta files
 def ReadFasta(file):
@@ -82,15 +87,27 @@ def main():
         'SVM': SVC(),
         'NaiveBayes': GaussianNB()
     }
-    
+
+    scoringTypes = ['accuracy', 'precision', 'recall', 'f1']
+
     results = {}
     for model_name, model in models.items():
-        mean, std = evaluate_model(featureMatrix, labelVector, model, crossValidator)
-        results[model_name] = {'mean': mean, 'std': std}
-    
+        for scoring in scoringTypes:
+            print(f"Evaluating {Fore.CYAN} {model_name} {Fore.RESET} with scoring {Fore.MAGENTA}{scoring}{Style.RESET_ALL}")
+            mean, std = evaluate_model(featureMatrix, labelVector, model, crossValidator, scoring)
+            if model_name not in results:
+                results[model_name] = {}
+            results[model_name][scoring] = {'mean': mean, 'std': std}
+        print()
+
     # Print results
-    for model_name, metrics in results.items():
-        print(f"{model_name}: Mean accuracy = {metrics['mean']:.4f}, Std = {metrics['std']:.4f}")
+    for model_name, model in results.items():
+        model_name_length = len(model_name)
+        target = floor((50 - model_name_length - 2)/2)
+        print("\n" + "="*target + " " + Fore.CYAN + model_name + Fore.RESET + " " + "="*target + ("=" if model_name_length % 2 != 0 else ""))
+        for scoring, values in model.items():
+            print(f"{Fore.MAGENTA}{scoring}{Style.RESET_ALL}: {Fore.GREEN} {round(values['mean'], 2)}  {Fore.BLUE}({round(values['std'], 2)}) {Fore.RESET}")
+        print("="*50 + "\n")
 
 if __name__ == '__main__':
     main()

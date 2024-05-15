@@ -1,0 +1,4 @@
+biopython
+pandas
+scikit-learn
+colorama
