@@ -6,11 +6,12 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
 import argparse
-from math import floor
-from colorama import Fore, Back, Style, init
 
-# Initialize colorama
-init()
+from rich.console import Console
+from rich.table import Table
+from rich.progress import Progress
+
+console = Console()
 
 # Function to read sequences from fasta files
 def ReadFasta(file):
@@ -56,9 +57,6 @@ def evaluate_model(featureMatrix, labelVector, model, crossValidator, scoring='a
     return scores.mean(), scores.std()
 
 
-# TODO: Adicionar logging para ficar bonitao como eu
-# TODO: Dividir em varios ficheiros tipo o antigo? 
-# TODO: Confirmar os valores, parece muito OP, mas e capaz de ser mesmo assim porque é como eu
 def main():
     parser = argparse.ArgumentParser(description='Protein sequence classification')
     parser.add_argument('-a', '--file_a', required=True, help='Path to the first fasta file', default='sequences/globin.fasta')
@@ -82,30 +80,47 @@ def main():
     crossValidator = StratifiedKFold(n_splits=10)
     
     models = {
-        'RandomForest': RandomForestClassifier(),
+        # 'RandomForest': RandomForestClassifier(),
         'SVM': SVC(),
         'NaiveBayes': GaussianNB()
     }
 
-    scoringTypes = ['accuracy', 'precision', 'recall', 'f1']
-
+    metrics = ['accuracy', 'precision', 'recall', 'f1']
     results = {}
-    for model_name, model in models.items():
-        for scoring in scoringTypes:
-            print(f"Evaluating {Fore.CYAN} {model_name} {Fore.RESET} with scoring {Fore.MAGENTA}{scoring}{Style.RESET_ALL}")
-            mean, std = evaluate_model(featureMatrix, labelVector, model, crossValidator, scoring)
-            if model_name not in results:
-                results[model_name] = {}
-            results[model_name][scoring] = {'mean': mean, 'std': std}
-        print()
+    with Progress() as progress:
+        tasks = []
+        for model_name, model in models.items():
+            tasks.append(progress.add_task(f"Evaluating [cyan]{model_name}[/]", total=len(metrics)))
 
+        task = 0
+        for model_name, model in models.items():
+            for scoring in metrics:
+                mean, std = evaluate_model(featureMatrix, labelVector, model, crossValidator, scoring)
+                if model_name not in results:
+                    results[model_name] = {}
+                results[model_name][scoring] = {'mean': mean, 'std': std}
+                progress.update(tasks[task], advance=1)
+            task += 1
+    console.print()
+
+
+
+
+    resultsTable = Table(show_lines=True)
+    resultsTable.add_column("Model", style="cyan", justify="center")
+    for scoring in metrics:
+        resultsTable.add_column(scoring, style="magenta", justify="center")
+        resultsTable.add_column(f"{scoring} std", style="blue", justify="center")
+    
     for model_name, model in results.items():
-        model_name_length = len(model_name)
-        target = floor((50 - model_name_length - 2)/2)
-        print("\n" + "="*target + " " + Fore.CYAN + model_name + Fore.RESET + " " + "="*target + ("=" if model_name_length % 2 != 0 else ""))
-        for scoring, values in model.items():
-            print(f"{Fore.MAGENTA}{scoring}{Style.RESET_ALL}: {Fore.GREEN} {round(values['mean'], 2)}  {Fore.BLUE}({round(values['std'], 2)}) {Fore.RESET}")
-        print("="*50 + "\n")
+        row = [model_name]
+        for scoring in metrics:
+            row.append(str(round(model[scoring]['mean'], 2)))
+            row.append(str(round(model[scoring]['std'], 2)))
+        resultsTable.add_row(*row)
+
+
+    console.print(resultsTable)
 
 if __name__ == '__main__':
     main()

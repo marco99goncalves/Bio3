@@ -1,4 +1,4 @@
 biopython
 pandas
 scikit-learn
-colorama
+rich
