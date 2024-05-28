@@ -62,6 +62,8 @@ def main():
     parser.add_argument('-a', '--file_a', help='Path to the first fasta file', default='globin.fasta')
     parser.add_argument('-b', '--file_b', help='Path to the second fasta file', default='zincfinger.fasta')
     parser.add_argument('-k', '--kmer_length', type=int, default=2, help='Length of k-mer')
+
+
     
     args = parser.parse_args()
     
